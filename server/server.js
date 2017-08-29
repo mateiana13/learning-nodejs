@@ -37,10 +37,6 @@ app.use(bodyParser.json({
     'content-type': 'application/json'
 }));
 
-app.all('*', function (req, res) {
-    res.send('Hello!');
-});
-
 app.post('/todos', (request, response) => { //create a new todo
     var todo = new Todo({
         text: request.body.text
