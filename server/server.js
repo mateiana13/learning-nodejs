@@ -1,8 +1,9 @@
-require config = require('./config/config.js');
+const config = require('./config/config.js');
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const lodash = require('lodash');
+
 
 const {
     ObjectID
@@ -22,9 +23,9 @@ const {
 } = require('./models/event.js');
 mongoose.set("debug", true);
 
-var app = express();
+var app = express(), nodalytics = require('nodalytics');
 const port = process.env.PORT;
-
+app.use(nodalytics('UA-103024478-4'));
 app.use(bodyParser.urlencoded({
     extended: true
 }));
@@ -35,6 +36,10 @@ app.use(bodyParser.json({
 	'accept': 'application.json',
     'content-type': 'application/json'
 }));
+
+app.all('*', function (req, res) {
+    res.send('Hello!');
+});
 
 app.post('/todos', (request, response) => { //create a new todo
     var todo = new Todo({
@@ -203,18 +208,29 @@ app.patch('/todos/:id', (req, res) => {
     body.completedAt = null;
   }
 
-  Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+  Todo.findByIdAndUpdate(id, {$set: {text: req.body.text, completed: req.body.completed}}, { upsert: true, new: true}).then((todo) => {
     if (!todo) {
       return res.status(404).send();
     }
 
     res.send({todo});
   }).catch((e) => {
-    res.status(400).send();
+    return res.status(400).send();
   })
 });
 
-   
+app.put('/todos/:id', (req, res) =>{
+
+    Todo.findOneAndUpdate({_id: req.params._id}, {
+        $set: {text:req.body.text}
+    }, {upsert: true, new:true}, (err, newTodo) => {
+        if(err) {
+            console.log(err)
+        }
+        console.log(newTodo);
+        res.json(newTodo);
+    });
+});
 
 
 
